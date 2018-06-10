@@ -48,10 +48,10 @@ app.post("/", function (req, res) {
     callMail();
 });
 
-app.get("/verifyData/:email/:customerToken", function (req, res) {
+app.get("/verifyData/:customerEmail/:customerToken", function (req, res) {
 
     var customer = new Customer();
-    customer.customerEmail = req.params.email;
+    customer.customerEmail = req.params.customerEmail;
     customer.customerToken = req.params.customerToken;
 
 
@@ -59,19 +59,19 @@ app.get("/verifyData/:email/:customerToken", function (req, res) {
     console.log(customer.customerToken);
 
     Customer.find({customerEmail: customer.customerEmail}, function (err, customers) {
-        var databaseToken = JSON.stringify(customers[0].customerToken);
+        var databaseToken = customers[0].customerToken;
         if (err) {
-            console.log(err)
+            console.log(err);
+            res.end({"Error" : "Error Occured"});
         }
-        console.log('customers.customerToken ----> ' + databaseToken);
+        console.log('databaseToken ----> ' + databaseToken);
         console.log('customer.customerToken ----> ' + customer.customerToken);
         if (databaseToken == customer.customerToken) {
             console.log('In if');
-            customer.customerVerified = true;
 
-            customer.save(function (err) {
+            customer.update({customers}, {$set : {verified : true}}, function (err,customer) {
                 if (err) throw err;
-                res.json({"Status": "Customer Saved"});
+                res.send({"Status": "Customer updated"});
             });
         } else {
             res.send("Invalid Token");
