@@ -11,9 +11,9 @@ var app = express();
 
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended: false}));
 
-function callMail(email,customerToken){
+function callMail(email, customerToken) {
     console.log(customerToken);
     nodemailer.createTestAccount((err, account) => {
         var transporter = nodemailer.createTransport({
@@ -31,7 +31,7 @@ function callMail(email,customerToken){
             to: email,
             subject: "Hello ✔ - You have been registered!",
             text: "Welcome !" + email + "! You have been registered! Please click on the link below to complete the registration",
-            html: "<a href='http://localhost:3000/`${email}`/`${customerToken}`'>Click this to verify</a>"
+            html: `<a href='http://localhost:3000/verifyData/${email}/${customerToken}'>Click this to verify</a>`
         };
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
@@ -44,11 +44,11 @@ function callMail(email,customerToken){
     });
 }
 
-app.post("/", function(req, res) {
+app.post("/", function (req, res) {
     callMail();
 });
 
-app.post("/verifyData/:email/:customerToken", function(req, res) {
+app.get("/verifyData/:email/:customerToken", function (req, res) {
 
     var customer = new Customer();
     customer.customerEmail = req.params.email;
@@ -58,21 +58,32 @@ app.post("/verifyData/:email/:customerToken", function(req, res) {
     console.log(customer.customerEmail);
     console.log(customer.customerToken);
 
-/*    Customer.find({}, function (err, customers) {
+    Customer.find({customerEmail: customer.customerEmail}, function (err, customers) {
+        var databaseToken = JSON.stringify(customers[0].customerToken);
         if (err) {
             console.log(err)
-        } else {
-            console.log(customers);
-            res.json(customers);
-            res.end();
         }
-    })*/
+        console.log('customers.customerToken ----> ' + databaseToken);
+        console.log('customer.customerToken ----> ' + customer.customerToken);
+        if (databaseToken == customer.customerToken) {
+            console.log('In if');
+            customer.customerVerified = true;
 
+            customer.save(function (err) {
+                if (err) throw err;
+                res.json({"Status": "Customer Saved"});
+            });
+        } else {
+            res.send("Invalid Token");
+        }
+        res.end();
+
+    })
 
 
 });
 
-app.get("/getData/", function(req, res) {
+app.get("/getData/", function (req, res) {
 
     Customer.find({}, function (err, customers) {
         if (err) {
@@ -86,7 +97,7 @@ app.get("/getData/", function(req, res) {
 
 });
 
-app.post("/enteringCustomer/", function(req, res) {
+app.post("/enteringCustomer/", function (req, res) {
 
     var customer = new Customer();
     var x = randomString({length: 14});
@@ -97,16 +108,16 @@ app.post("/enteringCustomer/", function(req, res) {
     customer.customerToken = x;
 
 
-    customer.save(function(err){
-        if(err) throw err;
+    customer.save(function (err) {
+        if (err) throw err;
 
-        callMail(customer.customerEmail,customer.customerToken);
-        res.json({"Status" : "Customer Saved"});
+        callMail(customer.customerEmail, customer.customerToken);
+        res.json({"Status": "Customer Saved"});
     });
 
 });
 
-app.listen(3000, function(err) {
+app.listen(3000, function (err) {
     if (err) throw err;
     console.log("Server is running");
 });
