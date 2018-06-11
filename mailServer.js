@@ -58,25 +58,24 @@ app.get("/verifyData/:customerEmail/:customerToken", function (req, res) {
     console.log(customer.customerEmail);
     console.log(customer.customerToken);
 
-    Customer.find({customerEmail: customer.customerEmail}, function (err, customers) {
-        var databaseToken = customers[0].customerToken;
+    Customer.findOne({customerEmail: customer.customerEmail}, function (err, customers) {
+        var databaseToken = customers.customerToken;
         if (err) {
             console.log(err);
-            res.end({"Error" : "Error Occured"});
+            res.end({"Error" : "Error has taken place"});
         }
-        console.log('databaseToken ----> ' + databaseToken);
-        console.log('customer.customerToken ----> ' + customer.customerToken);
+  /*      console.log('databaseToken ----> ' + databaseToken);
+        console.log('customer.customerToken ----> ' + customer.customerToken);*/
         if (databaseToken == customer.customerToken) {
             console.log('In if');
 
-            customer.update({customers}, {$set : {verified : true}}, function (err,customer) {
+            Customer.update(customers, {$set : {customerVerified : true}}, function (err,customer) {
                 if (err) throw err;
-                res.send({"Status": "Customer updated"});
+                res.send('You have been verified!');
             });
         } else {
             res.send("Invalid Token");
         }
-        res.end();
 
     })
 
